@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Half Marathon Tracker</title>
+<title>Training Tracker</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 :root {
@@ -27,6 +27,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 .progress-bar { margin-top: 10px; background: #1e1e2e; border-radius: 4px; height: 5px; overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, #f97316, #fb923c); border-radius: 4px; transition: width 0.4s ease; }
 .save-status { font-size: 11px; margin-top: 5px; text-align: right; height: 14px; transition: opacity 0.3s; }
+.settings-btn { position: absolute; top: 14px; right: 14px; background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 6px; line-height: 1; border-radius: 8px; transition: color 0.15s; }
+.settings-btn:hover { color: var(--text); }
 
 /* WEEK TABS */
 .tabs { display: flex; overflow-x: auto; background: var(--card); border-bottom: 1px solid var(--border); scrollbar-width: none; position: sticky; top: 108px; z-index: 99; }
@@ -124,17 +126,120 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 .dot { width: 6px; height: 6px; border-radius: 3px; background: #1e1e2e; cursor: pointer; transition: all 0.2s; }
 .dot.active { width: 14px; background: var(--orange); }
 .dot.current { background: var(--muted); }
+
+/* ─── ONBOARDING ─────────────────────────────────────────────────────────── */
+.onboard-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--bg);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px; overflow-y: auto;
+}
+.onboard-overlay.visible { display: flex; }
+.onboard-card {
+  width: 100%; max-width: 440px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 28px 24px;
+}
+.ob-progress { display: flex; gap: 6px; margin-bottom: 22px; }
+.ob-progress-dot { height: 4px; border-radius: 2px; background: var(--border); transition: all 0.2s; flex: 1; }
+.ob-progress-dot.done { background: var(--orange); }
+.ob-progress-dot.active { background: var(--orange2); }
+.ob-step-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); font-weight: 700; margin-bottom: 6px; }
+.ob-title { font-size: 22px; font-weight: 900; margin-bottom: 6px; line-height: 1.2; }
+.ob-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+.ob-tiles { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.ob-tile {
+  flex: 1; min-width: 90px; padding: 16px 10px;
+  background: var(--card2); border: 2px solid var(--border);
+  border-radius: 12px; cursor: pointer; text-align: center;
+  transition: all 0.15s;
+}
+.ob-tile-icon { font-size: 22px; margin-bottom: 6px; }
+.ob-tile-label { font-size: 12px; font-weight: 700; color: var(--text); }
+.ob-tile-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.ob-tile.selected { border-color: var(--orange); background: rgba(249,115,22,0.1); }
+.ob-tile.selected .ob-tile-label { color: var(--orange); }
+.ob-tiles-sm { display: flex; gap: 8px; margin-bottom: 8px; }
+.ob-tile-sm {
+  flex: 1; padding: 12px 8px; background: var(--card2);
+  border: 2px solid var(--border); border-radius: 10px;
+  cursor: pointer; text-align: center; font-size: 13px;
+  font-weight: 700; transition: all 0.15s;
+}
+.ob-tile-sm.selected { border-color: var(--orange); background: rgba(249,115,22,0.1); color: var(--orange); }
+.ob-toggle-row { display: flex; gap: 0; margin-bottom: 12px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.ob-toggle-btn {
+  flex: 1; padding: 9px; background: var(--card2); border: none;
+  color: var(--muted); font-family: inherit; font-size: 12px;
+  font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.ob-toggle-btn.active { background: rgba(249,115,22,0.15); color: var(--orange); }
+.ob-input-wrap { position: relative; margin-bottom: 6px; }
+.ob-input {
+  width: 100%; padding: 13px 14px;
+  background: var(--card2); border: 2px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 16px;
+  font-family: inherit; outline: none; transition: border-color 0.15s;
+}
+.ob-input:focus { border-color: var(--orange); }
+.ob-input.error { border-color: #ef4444; }
+.ob-input-suffix {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 12px; color: var(--muted); font-weight: 600; pointer-events: none;
+}
+.ob-hint { color: var(--muted); font-size: 12px; margin-top: 6px; line-height: 1.5; }
+.ob-error { color: #ef4444; font-size: 12px; margin-top: 6px; line-height: 1.5; display: none; }
+.ob-warning {
+  background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.25);
+  color: #fde68a; border-radius: 10px; padding: 10px 13px;
+  font-size: 12px; margin-top: 10px; line-height: 1.5; display: none;
+}
+.ob-info {
+  background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25);
+  color: #bfdbfe; border-radius: 10px; padding: 10px 13px;
+  font-size: 12px; margin-top: 10px; line-height: 1.5; display: none;
+}
+.ob-weeks-display { font-size: 13px; color: var(--green); margin-top: 8px; font-weight: 600; }
+.ob-nav { display: flex; gap: 10px; margin-top: 24px; }
+.ob-btn-back {
+  padding: 12px 20px; border-radius: 11px;
+  background: var(--card2); border: 1px solid var(--border);
+  color: var(--muted); font-family: inherit; font-size: 14px;
+  font-weight: 700; cursor: pointer; transition: all 0.15s;
+}
+.ob-btn-next {
+  flex: 1; padding: 12px; border-radius: 11px;
+  background: var(--orange); border: none; color: #fff;
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.ob-btn-next:disabled { opacity: 0.35; cursor: default; }
+.ob-confirm-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.ob-confirm-row:last-of-type { border-bottom: none; }
+.ob-confirm-label { font-size: 12px; color: var(--muted); }
+.ob-confirm-val { font-size: 12px; font-weight: 700; color: var(--text); text-align: right; }
+.ob-generate-btn {
+  width: 100%; margin-top: 20px; padding: 14px; border-radius: 12px;
+  background: var(--orange); border: none; color: #fff;
+  font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
+}
 </style>
 </head>
 <body>
 
+<!-- ONBOARDING OVERLAY -->
+<div class="onboard-overlay" id="onboarding">
+  <div class="onboard-card" id="obCard"></div>
+</div>
+
 <!-- HEADER -->
-<div class="header">
-  <div class="header-label">Half Marathon Tracker</div>
+<div class="header" style="position:relative">
+  <button class="settings-btn" onclick="showSettings()" title="Reset plan">⚙</button>
+  <div class="header-label" id="headerLabel">Training Tracker</div>
   <div class="header-row">
     <div>
-      <div class="header-title">April 26 🏁</div>
-      <div class="header-sub">Goal: Sub 2:00:00 · 6.5 mph</div>
+      <div class="header-title" id="headerTitle">—</div>
+      <div class="header-sub" id="headerSub">Set up your plan to get started</div>
     </div>
     <div>
       <div class="header-pct" id="pct">0%</div>
@@ -159,155 +264,723 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 </div>
 
 <script>
-// ─── DATA ──────────────────────────────────────────────────────────────────
-const PLAN_START = new Date("2026-02-23");
-
-const WEEKS = [
-  { num:1, label:"WK 01", tag:null, goal:"Finish the week steady — no heroics", total:"~12.7 mi", runs:[
-    { id:"1-1", day:"Tue", name:"Easy Run ✅", dist:"3.2 mi", type:"done", speed:"—", readonly:true },
-    { id:"1-2", day:"Thu", name:"Easy Run", dist:"3.5 mi", type:"easy", speed:"5.5–5.7 mph",
-      details:{hr:"Under 150 bpm", feel:"Fully conversational", notes:"Keep it truly easy"} },
-    { id:"1-3", day:"Sat/Sun", name:"Long Run", dist:"6 mi", type:"long", speed:"5.7–6.0 mph",
-      details:{hr:"Zone 2–3 (140–158)", route:"Flat preferred", notes:"Even effort, don't push"},
-      hr_note:"Your avg was 158 on easy runs. If this feels hard, drop to 5.4 mph." }
-  ]},
-  { num:2, label:"WK 02", tag:null, goal:"First taste of goal pace", total:"~14 mi", runs:[
-    { id:"2-1", day:"Tue", name:"Easy Run", dist:"3.5 mi", type:"easy", speed:"5.5–5.7 mph", details:{hr:"Under 150 bpm", feel:"Conversational"} },
-    { id:"2-2", day:"Thu", name:"Tempo Run", dist:"3.5 mi", type:"tempo", speed:"6.5–6.6 mph peak",
-      structure:["1.0 mi warm-up @ 5.5 mph","2.0 mi @ 6.5–6.6 mph (race pace)","0.5 mi cool-down @ 5.5 mph"],
-      details:{notes:"First time feeling race pace — hard but controlled"} },
-    { id:"2-3", day:"Sat/Sun", name:"Long Run", dist:"7 mi", type:"long", speed:"5.7–6.0 mph", details:{notes:"Even effort throughout"} }
-  ]},
-  { num:3, label:"WK 03", tag:null, goal:"Build confidence at goal pace", total:"~16 mi", runs:[
-    { id:"3-1", day:"Tue", name:"Easy Run", dist:"4 mi", type:"easy", speed:"5.5–5.7 mph", details:{} },
-    { id:"3-2", day:"Thu", name:"Tempo Run", dist:"4 mi", type:"tempo", speed:"6.5–6.6 mph peak",
-      structure:["1.0 mi @ 5.5 mph","2.5 mi @ 6.5–6.6 mph","0.5 mi @ 5.5 mph"],
-      details:{notes:"Race pace starting to feel familiar"} },
-    { id:"3-3", day:"Sat/Sun", name:"Long Run", dist:"8 mi", type:"long", speed:"5.7–6.0 mph",
-      details:{notes:"If it feels hard past mile 6, drop to 5.5 mph"} }
-  ]},
-  { num:4, label:"WK 04", tag:"CUTBACK", goal:"Recovery — do NOT add miles", total:"~12 mi", runs:[
-    { id:"4-1", day:"Tue", name:"Easy Run", dist:"3 mi", type:"easy", speed:"5.5–5.7 mph", details:{notes:"Pure easy, no pushing"} },
-    { id:"4-2", day:"Thu", name:"Easy Run", dist:"3 mi", type:"easy", speed:"5.5–5.7 mph", details:{notes:"Resist the urge to do more"} },
-    { id:"4-3", day:"Sat/Sun", name:"Easy Long Run", dist:"6 mi", type:"long", speed:"5.5–5.7 mph", details:{notes:"Even easier than usual"} }
-  ]},
-  { num:5, label:"WK 05", tag:null, goal:"Biggest volume jump — respect the distance", total:"~18 mi", runs:[
-    { id:"5-1", day:"Tue", name:"Easy Run", dist:"4 mi", type:"easy", speed:"5.5–5.7 mph", details:{} },
-    { id:"5-2", day:"Thu", name:"Tempo Run", dist:"5 mi", type:"tempo", speed:"6.5–6.6 mph peak",
-      structure:["1.0 mi @ 5.5 mph","3.0 mi @ 6.5–6.6 mph","1.0 mi @ 5.5 mph"],
-      details:{notes:"3 goal-pace miles is significant. Respect it."} },
-    { id:"5-3", day:"Sat/Sun", name:"Long Run", dist:"9 mi", type:"long", speed:"5.7–6.0 mph",
-      details:{notes:"Most important run so far. Start fueling at mile 4–5."} }
-  ]},
-  { num:6, label:"WK 06", tag:null, goal:"First double-digit long run + progressive finish", total:"~19 mi", runs:[
-    { id:"6-1", day:"Tue", name:"Easy Run", dist:"4 mi", type:"easy", speed:"5.5–5.7 mph", details:{} },
-    { id:"6-2", day:"Thu", name:"Tempo Run", dist:"5 mi", type:"tempo", speed:"6.6–6.7 mph peak",
-      structure:["1.0 mi @ 5.5 mph","3.0 mi @ 6.6–6.7 mph (uptick)","1.0 mi @ 5.5 mph"],
-      details:{notes:"Slight speed increase from previous tempos"} },
-    { id:"6-3", day:"Sat/Sun", name:"Progressive Long Run", dist:"10 mi", type:"prog", speed:"→ 6.5 mph",
-      structure:["Mi 1–7 @ 5.8 mph","Mi 8–9 @ 6.2 mph","Mi 10 @ 6.5 mph"],
-      details:{notes:"Don't start the push early — miles 1–7 must be easy"} }
-  ]},
-  { num:7, label:"WK 07", tag:null, goal:"Peak week — your confidence builder", total:"~20 mi", runs:[
-    { id:"7-1", day:"Tue", name:"Easy Run", dist:"4 mi", type:"easy", speed:"5.5–5.7 mph", details:{} },
-    { id:"7-2", day:"Thu", name:"Tempo Run", dist:"5 mi", type:"tempo", speed:"6.5–6.6 mph peak",
-      structure:["1.0 mi @ 5.5 mph","2.0 mi @ 6.5–6.6 mph","2.0 mi @ 5.5 mph"],
-      details:{notes:"Shorter tempo — saving legs for the long run"} },
-    { id:"7-3", day:"Sat/Sun", name:"Progressive Long Run", dist:"11 mi", type:"prog", speed:"→ 6.5 mph",
-      structure:["Mi 1–7 @ 5.8 mph","Mi 8–10 @ 6.2 mph","Mi 11 @ 6.5 mph"],
-      details:{notes:"If the last mile feels strong, you're ready 💪"} }
-  ]},
-  { num:8, label:"WK 08", tag:"TAPER", goal:"Arrive at race week fresh, not flat", total:"~13 mi", runs:[
-    { id:"8-1", day:"Tue", name:"Easy Run", dist:"3 mi", type:"easy", speed:"5.5–5.7 mph", details:{notes:"You'll feel sluggish — normal taper fatigue"} },
-    { id:"8-2", day:"Thu", name:"Easy + Strides", dist:"3 mi", type:"easy", speed:"5.5 + 7.1 mph",
-      structure:["2.5 mi @ 5.5 mph","4 × 20 sec @ 7.1 mph","60 sec walk recovery between strides"],
-      details:{notes:"Strides keep legs sharp without taxing them"} },
-    { id:"8-3", day:"Sat/Sun", name:"Easy Long Run", dist:"7 mi", type:"long", speed:"5.5–5.7 mph",
-      details:{notes:"Confidence run only — resist racing it"} }
-  ]},
-  { num:9, label:"RACE 🏁", tag:"RACE DAY", goal:"Stay calm, stay loose, trust everything you've done", total:"13.1 mi", runs:[
-    { id:"9-1", day:"Tue", name:"Shakeout Run", dist:"2 mi", type:"easy", speed:"5.5–5.7 mph", details:{} },
-    { id:"9-2", day:"Wed", name:"Rest", dist:"—", type:"rest", speed:"—" },
-    { id:"9-3", day:"Thu", name:"Shakeout + Strides", dist:"2 mi", type:"easy", speed:"5.5 + 7.1 mph",
-      structure:["Easy 2 mi + 3 × 20 sec strides @ 7.1 mph"], details:{} },
-    { id:"9-4", day:"Fri", name:"Rest", dist:"—", type:"rest", speed:"—" },
-    { id:"9-5", day:"Sat", name:"Rest + Carb Load", dist:"—", type:"rest", speed:"—",
-      details:{notes:"Lay out gear, eat carb-rich dinner, hydrate all day"} },
-    { id:"9-6", day:"Sun Apr 26", name:"🏁 RACE DAY", dist:"13.1 mi", type:"race", speed:"6.3 → 6.5 → all out",
-      structure:["Mi 1–3 @ 6.3 mph (conservative start)","Mi 4–10 @ 6.5–6.6 mph (work zone)","Mi 11–13.1 @ everything you have left"],
-      details:{notes:"The race begins at mile 10. Let people pass in the first 3 miles."} }
-  ]}
-];
-
-const TYPE_CFG = {
-  done:  { bg:"#0d1f0d", border:"#22c55e30" },
-  easy:  { bg:"#0f1f12", border:"#22c55e25" },
-  tempo: { bg:"#1f1000", border:"#f9731625" },
-  long:  { bg:"#0f1525", border:"#3b82f625" },
-  prog:  { bg:"#150d25", border:"#a855f725" },
-  rest:  { bg:"#111118", border:"#33333340" },
-  race:  { bg:"#1f0800", border:"#f9731640" },
+// ─── CONSTANTS ──────────────────────────────────────────────────────────────
+const EVENT_CONFIG = {
+  "5k":   { label:"5K",            dist:5000,  minWeeks:6,  idealWeeks:10, peakLong:3.0,  startLong:1.5, raceDist:"3.1 mi",  trackerLabel:"5K Tracker" },
+  "10k":  { label:"10K",           dist:10000, minWeeks:8,  idealWeeks:12, peakLong:6.0,  startLong:2.5, raceDist:"6.2 mi",  trackerLabel:"10K Tracker" },
+  "half": { label:"Half Marathon", dist:21097, minWeeks:10, idealWeeks:14, peakLong:11.0, startLong:5.0, raceDist:"13.1 mi", trackerLabel:"Half Marathon Tracker" },
+  "full": { label:"Marathon",      dist:42195, minWeeks:16, idealWeeks:20, peakLong:20.0, startLong:8.0, raceDist:"26.2 mi", trackerLabel:"Marathon Tracker" },
 };
 
-// ─── STATE ─────────────────────────────────────────────────────────────────
-let activeWeek = getCurrentWeekIndex();
-let completed = {};
-let expanded = {};
+const RUN_DAY_PATTERNS = {
+  3: ["Tue","Thu","Sat"],
+  4: ["Mon","Wed","Fri","Sun"],
+  5: ["Mon","Tue","Thu","Fri","Sun"],
+};
 
-function getCurrentWeekIndex() {
-  const now = new Date();
-  const diff = Math.floor((now - PLAN_START) / (7*24*60*60*1000));
-  return Math.max(0, Math.min(diff, WEEKS.length - 1));
+const TYPE_CFG = {
+  done:    { bg:"#0d1f0d", border:"#22c55e30" },
+  easy:    { bg:"#0f1f12", border:"#22c55e25" },
+  tempo:   { bg:"#1f1000", border:"#f9731625" },
+  long:    { bg:"#0f1525", border:"#3b82f625" },
+  prog:    { bg:"#150d25", border:"#a855f725" },
+  strides: { bg:"#1a0f25", border:"#a855f720" },
+  rest:    { bg:"#111118", border:"#33333340" },
+  race:    { bg:"#1f0800", border:"#f9731640" },
+};
+
+// ─── VDOT ENGINE ─────────────────────────────────────────────────────────────
+function pctVO2max(tMin) {
+  return 0.8 + 0.1894393 * Math.exp(-0.012778 * tMin)
+             + 0.2989558 * Math.exp(-0.1932605 * tMin);
 }
 
-function load() {
-  try {
-    const s = localStorage.getItem("hm-v2");
-    if (s) completed = JSON.parse(s);
-  } catch(e) {}
+function vo2AtVelocity(vMpm) {
+  return -4.60 + 0.182258 * vMpm + 0.000104 * vMpm * vMpm;
 }
 
-function save() {
+function calcVDOT(distMeters, finishSeconds) {
+  const tMin = finishSeconds / 60;
+  const vMpm = distMeters / tMin;
+  return vo2AtVelocity(vMpm) / pctVO2max(tMin);
+}
+
+function velocityAtPct(vdot, pct) {
+  const targetVO2 = vdot * pct;
+  const a = 0.000104, b = 0.182258, c = -4.60 - targetVO2;
+  const disc = b * b - 4 * a * c;
+  if (disc < 0) return 0;
+  return (-b + Math.sqrt(disc)) / (2 * a);
+}
+
+function mpmToMph(mpm) {
+  return Math.round((mpm * 60 / 1609.344) * 10) / 10;
+}
+
+function calcTrainingPaces(vdot) {
+  const zones = {
+    easy:       { lo: 0.59, hi: 0.74 },
+    marathon:   { lo: 0.75, hi: 0.84 },
+    threshold:  { lo: 0.83, hi: 0.88 },
+    interval:   { lo: 0.95, hi: 1.00 },
+    repetition: { lo: 1.05, hi: 1.15 },
+  };
+  const paces = {};
+  for (const [zone, range] of Object.entries(zones)) {
+    paces[zone] = {
+      mphLo: mpmToMph(velocityAtPct(vdot, range.lo)),
+      mphHi: mpmToMph(velocityAtPct(vdot, range.hi)),
+    };
+  }
+  return paces;
+}
+
+function fmtPace(p) {
+  if (!p) return "—";
+  if (p.mphLo === p.mphHi) return `${p.mphHi} mph`;
+  return `${p.mphLo}–${p.mphHi} mph`;
+}
+
+function parseGoalToSeconds(inputType, rawValue, distMeters) {
+  rawValue = rawValue.trim();
+  if (inputType === "time") {
+    const parts = rawValue.split(":").map(Number);
+    if (parts.some(isNaN) || parts.length < 2) return NaN;
+    if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+    return parts[0]*60 + parts[1];
+  }
+  if (inputType === "mph") {
+    const mph = parseFloat(rawValue);
+    if (isNaN(mph) || mph <= 0) return NaN;
+    const mpm = mph * 1609.344 / 60;
+    return (distMeters / mpm) * 60;
+  }
+  if (inputType === "minpermile") {
+    const parts = rawValue.split(":").map(Number);
+    if (parts.length < 2 || parts.some(isNaN)) return NaN;
+    const secPerMile = parts[0]*60 + parts[1];
+    return secPerMile * (distMeters / 1609.344);
+  }
+  return NaN;
+}
+
+function formatSeconds(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = Math.round(secs % 60);
+  if (h > 0) return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  return `${m}:${String(s).padStart(2,"0")}`;
+}
+
+// ─── PLAN GENERATOR ──────────────────────────────────────────────────────────
+function calcPhases(totalWeeks) {
+  const training = totalWeeks - 1;
+  const taper = Math.max(1, Math.round(training * 0.10));
+  const peak  = Math.max(1, Math.round(training * 0.15));
+  const base  = Math.max(2, Math.round(training * 0.30));
+  const build = Math.max(1, training - taper - peak - base);
+  return { base, build, peak, taper, race: 1 };
+}
+
+function buildLongRunProgression(trainingWeeks, startDist, peakDist, phases) {
+  const dists = [];
+  let current = startDist;
+  const taperStart = phases.base + phases.build + phases.peak;
+
+  for (let i = 0; i < trainingWeeks; i++) {
+    if (i >= taperStart) {
+      const tw = i - taperStart;
+      const frac = 1 - (tw + 1) / (phases.taper + 1) * 0.40;
+      dists.push(Math.max(Math.round(peakDist * frac * 2) / 2, startDist));
+    } else {
+      const isCutback = (i + 1) % 4 === 0 && i < taperStart - 1;
+      if (isCutback) {
+        const cb = Math.round(current * 0.75 * 2) / 2;
+        dists.push(cb);
+        current = cb;
+      } else if (current >= peakDist) {
+        dists.push(peakDist);
+      } else {
+        const next = Math.min(Math.round(current * 1.10 * 2) / 2, peakDist);
+        dists.push(next);
+        current = next;
+      }
+    }
+  }
+  return dists;
+}
+
+function phaseForWeek(weekIdx, phases) {
+  if (weekIdx < phases.base) return "base";
+  if (weekIdx < phases.base + phases.build) return "build";
+  if (weekIdx < phases.base + phases.build + phases.peak) return "peak";
+  return "taper";
+}
+
+function assignRunTypes(phase, numRuns, isCutback) {
+  const types = Array(numRuns).fill("easy");
+  types[numRuns - 1] = "long";
+  if (!isCutback && (phase === "build" || phase === "peak")) {
+    if (numRuns >= 3) types[numRuns - 2] = "tempo";
+    if (numRuns >= 5) types[1] = "strides";
+  }
+  if (!isCutback && phase === "taper") {
+    if (numRuns >= 3) types[numRuns - 2] = "strides";
+  }
+  return types;
+}
+
+function assignEasyDist(experience, phase, weekNum, totalWeeks) {
+  const mult = { beginner: 0.8, intermediate: 1.0, advanced: 1.25 }[experience] || 1.0;
+  const prog = weekNum / totalWeeks;
+  const base = 2.5 + prog * 1.5;
+  return Math.round(base * mult * 2) / 2;
+}
+
+function assignTempoDist(experience, phase, weekNum, totalWeeks) {
+  const mult = { beginner: 0.8, intermediate: 1.0, advanced: 1.25 }[experience] || 1.0;
+  const prog = weekNum / totalWeeks;
+  const base = 2.5 + prog * 2.5;
+  return Math.round(base * mult * 2) / 2;
+}
+
+function buildStructure(runType, dist, paces) {
+  if (runType === "tempo") {
+    const wu = 1.0, cd = 0.5;
+    const quality = Math.max(1.0, Math.round((dist - wu - cd) * 2) / 2);
+    return [
+      `${wu} mi warm-up @ ${paces.easy.mphHi} mph`,
+      `${quality} mi @ ${fmtPace(paces.threshold)} (tempo pace)`,
+      `${cd} mi cool-down @ ${paces.easy.mphHi} mph`,
+    ];
+  }
+  if (runType === "strides") {
+    const easyMi = Math.max(1.5, dist - 0.3);
+    return [
+      `${easyMi} mi easy @ ${fmtPace(paces.easy)}`,
+      `4 × 20 sec @ ${paces.repetition.mphLo} mph`,
+      "60 sec walk recovery between strides",
+    ];
+  }
+  if (runType === "prog") {
+    const thirds = Math.floor(dist / 3);
+    const mid = Math.floor(dist * 2 / 3);
+    return [
+      `Mi 1–${thirds} @ ${fmtPace(paces.easy)}`,
+      `Mi ${thirds+1}–${mid} @ ${fmtPace(paces.marathon)}`,
+      `Mi ${mid+1}–${dist} @ ${fmtPace(paces.threshold)}`,
+    ];
+  }
+  return null;
+}
+
+function genWeekGoal(phase, isCutback) {
+  if (isCutback) return "Recovery week — do NOT add miles";
+  if (phase === "base") return "Build your aerobic base — keep every run easy";
+  if (phase === "build") return "Build quality and endurance — controlled effort";
+  if (phase === "peak") return "Peak week — your biggest confidence builder";
+  if (phase === "taper") return "Arrive at race week fresh, not flat";
+  return "Stay consistent";
+}
+
+function genRunNote(runType, phase) {
+  if (runType === "tempo") return "Hard but controlled — you should be able to say a few words";
+  if (runType === "easy") return "If you can't hold a conversation, slow down";
+  if (runType === "long" && phase === "peak") return "Start conservatively, finish strong";
+  if (runType === "long") return "Even effort — long runs build the aerobic engine";
+  if (runType === "strides") return "Keep these short and sharp — controlled acceleration";
+  return "";
+}
+
+function buildRaceWeek(weekNum, config) {
+  const ev = EVENT_CONFIG[config.event];
+  const raceDate = new Date(config.raceDateISO);
+  const dateLabel = raceDate.toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" });
+  const p = config.paces;
+  return {
+    num: weekNum, label: "RACE 🏁", tag: "RACE DAY",
+    goal: "Stay calm, stay loose, trust everything you've done",
+    total: ev.raceDist, isRaceWeek: true,
+    raceDate: dateLabel, eventLabel: ev.label, goalDisplay: config.goalDisplay, paces: p,
+    runs: [
+      { id:`${weekNum}-1`, day:"Mon", name:"Shakeout Run", dist:"2 mi", type:"easy", speed:fmtPace(p.easy), details:{notes:"Light and easy — shake out the taper legs"} },
+      { id:`${weekNum}-2`, day:"Tue", name:"Rest", dist:"—", type:"rest", speed:"—" },
+      { id:`${weekNum}-3`, day:"Wed", name:"Shakeout + Strides", dist:"2 mi", type:"strides",
+        speed:`${p.easy.mphHi} + ${p.repetition.mphLo} mph`,
+        structure:[`Easy 2 mi @ ${fmtPace(p.easy)}`, `3 × 20 sec strides @ ${p.repetition.mphLo} mph`, "Full recovery between strides"], details:{} },
+      { id:`${weekNum}-4`, day:"Thu", name:"Rest", dist:"—", type:"rest", speed:"—" },
+      { id:`${weekNum}-5`, day:"Fri/Sat", name:"Rest + Carb Load", dist:"—", type:"rest", speed:"—",
+        details:{notes:"Lay out gear, eat carb-rich dinner, hydrate all day"} },
+      { id:`${weekNum}-6`, day:"Race Day", name:"🏁 RACE DAY", dist:ev.raceDist, type:"race",
+        speed:`${p.easy.mphHi} → ${p.threshold.mphHi} → all out`,
+        structure:[
+          `First third @ ${fmtPace(p.easy)} (conservative — let people pass)`,
+          `Middle third @ ${fmtPace(p.threshold)} (goal pace)`,
+          `Final third @ everything you have left`,
+        ],
+        details:{notes:"The race begins in the last third. Start easy, finish strong."} }
+    ]
+  };
+}
+
+function generatePlan(config) {
+  const ev = EVENT_CONFIG[config.event];
+  const { paces, experience, runsPerWeek, totalWeeks, planStartISO } = config;
+  const trainingWeeks = totalWeeks - 1;
+  const phases = calcPhases(totalWeeks);
+  const days = RUN_DAY_PATTERNS[runsPerWeek];
+  const longRunDists = buildLongRunProgression(trainingWeeks, ev.startLong, ev.peakLong, phases);
+
+  const WEEKS = [];
+
+  for (let i = 0; i < trainingWeeks; i++) {
+    const weekNum = i + 1;
+    const phase = phaseForWeek(i, phases);
+    const isCutback = (i + 1) % 4 === 0 && i < trainingWeeks - phases.taper - 1;
+    const longDist = longRunDists[i];
+    const runTypes = assignRunTypes(phase, runsPerWeek, isCutback);
+
+    const runs = [];
+    let totalDist = 0;
+
+    runTypes.forEach((runType, slot) => {
+      const day = days[slot];
+      let dist;
+      if (runType === "long") dist = longDist;
+      else if (runType === "tempo") dist = assignTempoDist(experience, phase, weekNum, trainingWeeks);
+      else dist = assignEasyDist(experience, phase, weekNum, trainingWeeks);
+
+      totalDist += dist;
+      const id = `${weekNum}-${slot+1}`;
+
+      const isProgRun = runType === "long" && (phase === "peak");
+      const effectiveType = isProgRun ? "prog" : runType;
+
+      let speed;
+      if (runType === "easy") speed = fmtPace(paces.easy);
+      else if (runType === "long") speed = phase === "peak" ? `→ ${fmtPace(paces.threshold)}` : fmtPace(paces.easy);
+      else if (runType === "tempo") speed = fmtPace(paces.threshold);
+      else if (runType === "strides") speed = `${paces.easy.mphHi} + ${paces.repetition.mphLo} mph`;
+      else speed = "—";
+
+      const structure = buildStructure(isProgRun ? "prog" : runType, dist, paces);
+      const nameMap = {
+        easy: "Easy Run",
+        long: phase === "peak" ? "Progressive Long Run" : "Long Run",
+        tempo: "Tempo Run",
+        strides: "Easy + Strides",
+      };
+
+      runs.push({
+        id, day,
+        name: nameMap[runType] || "Easy Run",
+        dist: `${dist} mi`,
+        type: effectiveType,
+        speed,
+        structure: structure || undefined,
+        details: { notes: genRunNote(runType, phase) },
+      });
+    });
+
+    const tag = isCutback ? "CUTBACK" : phase === "taper" ? "TAPER" : null;
+
+    WEEKS.push({
+      num: weekNum,
+      label: `WK ${String(weekNum).padStart(2,"0")}`,
+      tag,
+      goal: genWeekGoal(phase, isCutback),
+      total: `~${Math.round(totalDist * 10) / 10} mi`,
+      runs,
+    });
+  }
+
+  WEEKS.push(buildRaceWeek(totalWeeks, config));
+  return WEEKS;
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+function loadConfig() {
+  try { const s = localStorage.getItem("training-config"); return s ? JSON.parse(s) : null; }
+  catch(e) { return null; }
+}
+function saveConfig(cfg) {
+  localStorage.setItem("training-config", JSON.stringify(cfg));
+}
+function loadProgress() {
   try {
-    localStorage.setItem("hm-v2", JSON.stringify(completed));
+    const s = localStorage.getItem("training-progress");
+    if (s) { const d = JSON.parse(s); completed = d.completed || {}; }
+  } catch(e) { completed = {}; }
+}
+function saveProgress() {
+  try {
+    localStorage.setItem("training-progress", JSON.stringify({ version:1, completed }));
     showSave("✓ Saved", "#22c55e");
-  } catch(e) {
-    showSave("⚠ Save failed", "#ef4444");
+  } catch(e) { showSave("⚠ Save failed", "#ef4444"); }
+}
+
+// ─── ONBOARDING ──────────────────────────────────────────────────────────────
+let obState = {};
+
+function initObState() {
+  obState = { step:1, event:null, goalType:"time", goalValue:"", experience:null, runsPerWeek:3, raceDateISO:"" };
+}
+
+function showOnboarding() {
+  initObState();
+  document.getElementById("onboarding").classList.add("visible");
+  renderObStep();
+}
+
+function hideOnboarding() {
+  document.getElementById("onboarding").classList.remove("visible");
+}
+
+function obProgressDots(currentStep, totalSteps) {
+  return Array.from({length: totalSteps}, (_,i) =>
+    `<div class="ob-progress-dot ${i < currentStep-1 ? "done" : i === currentStep-1 ? "active" : ""}"></div>`
+  ).join("");
+}
+
+function renderObStep() {
+  const card = document.getElementById("obCard");
+  const s = obState.step;
+  let html = `<div class="ob-progress">${obProgressDots(s, 5)}</div>`;
+
+  if (s === 1) {
+    html += `<div class="ob-step-label">Step 1 of 5</div>
+    <div class="ob-title">What are you training for?</div>
+    <div class="ob-subtitle">We'll build a personalized plan around your goal.</div>
+    <div class="ob-tiles">
+      ${[["5k","🏃","5K","3.1 miles"],["10k","🏃‍♂️","10K","6.2 miles"],["half","🏅","Half Marathon","13.1 miles"],["full","🏆","Marathon","26.2 miles"]].map(([id,icon,label,sub])=>
+        `<div class="ob-tile${obState.event===id?" selected":""}" onclick="obState.event='${id}';renderObStep()">
+          <div class="ob-tile-icon">${icon}</div>
+          <div class="ob-tile-label">${label}</div>
+          <div class="ob-tile-sub">${sub}</div>
+        </div>`).join("")}
+    </div>
+    <div class="ob-nav">
+      <button class="ob-btn-next" ${!obState.event?"disabled":""} onclick="obNext()">Continue →</button>
+    </div>`;
+  }
+
+  else if (s === 2) {
+    const ev = EVENT_CONFIG[obState.event];
+    const exampleTime = obState.event==="5k"?"25:00":obState.event==="10k"?"55:00":obState.event==="half"?"2:00:00":"4:30:00";
+    const exampleMph  = obState.event==="5k"?"7.5":obState.event==="10k"?"6.8":obState.event==="half"?"6.5":"5.8";
+    const exampleMpm  = obState.event==="5k"?"8:00":obState.event==="10k"?"8:50":obState.event==="half"?"9:12":"10:20";
+    const suffix = obState.goalType==="time"?"(HH:MM:SS)":obState.goalType==="mph"?"mph":"min/mile";
+    const placeholder = obState.goalType==="time"?exampleTime:obState.goalType==="mph"?exampleMph:exampleMpm;
+    const hintText = `e.g. ${obState.goalType==="time"?exampleTime:obState.goalType==="mph"?exampleMph+" mph":exampleMpm+" per mile"} for a typical ${ev.label} goal`;
+    html += `<div class="ob-step-label">Step 2 of 5</div>
+    <div class="ob-title">What's your goal?</div>
+    <div class="ob-subtitle">Enter a target finish time or pace — we'll calculate your training zones.</div>
+    <div class="ob-toggle-row">
+      <button class="ob-toggle-btn${obState.goalType==="time"?" active":""}" onclick="obState.goalType='time';obState.goalValue='';renderObStep()">Finish Time</button>
+      <button class="ob-toggle-btn${obState.goalType==="mph"?" active":""}" onclick="obState.goalType='mph';obState.goalValue='';renderObStep()">Speed (mph)</button>
+      <button class="ob-toggle-btn${obState.goalType==="minpermile"?" active":""}" onclick="obState.goalType='minpermile';obState.goalValue='';renderObStep()">Pace (min/mi)</button>
+    </div>
+    <div class="ob-input-wrap">
+      <input class="ob-input" id="goalInput" type="text" placeholder="${placeholder}"
+        value="${obState.goalValue}"
+        oninput="obState.goalValue=this.value;obValidateGoal()">
+      <span class="ob-input-suffix">${suffix}</span>
+    </div>
+    <div class="ob-hint">${hintText}</div>
+    <div class="ob-error" id="goalError"></div>
+    <div class="ob-nav">
+      <button class="ob-btn-back" onclick="obBack()">← Back</button>
+      <button class="ob-btn-next" id="goalNextBtn" disabled onclick="obNext()">Continue →</button>
+    </div>`;
+  }
+
+  else if (s === 3) {
+    html += `<div class="ob-step-label">Step 3 of 5</div>
+    <div class="ob-title">Your experience level</div>
+    <div class="ob-subtitle">This shapes your weekly volume and workout intensity.</div>
+    <div class="ob-tiles">
+      ${[["beginner","🌱","Beginner","0–1 year running"],["intermediate","⚡","Intermediate","1–3 years, some races"],["advanced","🔥","Advanced","3+ years, consistent training"]].map(([id,icon,label,sub])=>
+        `<div class="ob-tile${obState.experience===id?" selected":""}" onclick="obState.experience='${id}';renderObStep()">
+          <div class="ob-tile-icon">${icon}</div>
+          <div class="ob-tile-label">${label}</div>
+          <div class="ob-tile-sub">${sub}</div>
+        </div>`).join("")}
+    </div>
+    <div class="ob-nav">
+      <button class="ob-btn-back" onclick="obBack()">← Back</button>
+      <button class="ob-btn-next" ${!obState.experience?"disabled":""} onclick="obNext()">Continue →</button>
+    </div>`;
+  }
+
+  else if (s === 4) {
+    const ev = EVENT_CONFIG[obState.event];
+    html += `<div class="ob-step-label">Step 4 of 5</div>
+    <div class="ob-title">Your schedule</div>
+    <div class="ob-subtitle">Pick your race date and how many days per week you can train.</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Runs per week</div>
+    <div class="ob-tiles-sm" style="margin-bottom:18px">
+      ${[3,4,5].map(n=>`<div class="ob-tile-sm${obState.runsPerWeek===n?" selected":""}" onclick="obState.runsPerWeek=${n};renderObStep()">${n} days</div>`).join("")}
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Race date</div>
+    <div class="ob-input-wrap">
+      <input class="ob-input" id="dateInput" type="date" value="${obState.raceDateISO}"
+        oninput="obState.raceDateISO=this.value;obValidateDate()">
+    </div>
+    <div class="ob-hint">Needs at least ${ev.minWeeks} weeks from today</div>
+    <div class="ob-weeks-display" id="weeksDisplay" style="display:none"></div>
+    <div class="ob-warning" id="dateWarning"></div>
+    <div class="ob-info" id="dateInfo"></div>
+    <div class="ob-nav">
+      <button class="ob-btn-back" onclick="obBack()">← Back</button>
+      <button class="ob-btn-next" id="dateNextBtn" disabled onclick="obNext()">Continue →</button>
+    </div>`;
+  }
+
+  else if (s === 5) {
+    const ev = EVENT_CONFIG[obState.event];
+    const raceDate = new Date(obState.raceDateISO);
+    const dateStr = raceDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
+    const { totalWeeks, planStartISO } = calcPlanTiming(obState.raceDateISO, obState.event);
+    const planStart = new Date(planStartISO);
+    const planStartStr = planStart.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    const finishSecs = parseGoalToSeconds(obState.goalType, obState.goalValue, ev.dist);
+    const goalDisplay = obState.goalType === "time" ? obState.goalValue :
+      obState.goalType === "mph" ? `${obState.goalValue} mph target` :
+      `${obState.goalValue}/mi target`;
+    const finishFormatted = formatSeconds(finishSecs);
+    html += `<div class="ob-step-label">Step 5 of 5</div>
+    <div class="ob-title">Your plan is ready 🎉</div>
+    <div class="ob-subtitle">Here's what we'll build for you.</div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:4px">
+      <div class="ob-confirm-row"><span class="ob-confirm-label">Event</span><span class="ob-confirm-val">${ev.label}</span></div>
+      <div class="ob-confirm-row"><span class="ob-confirm-label">Race date</span><span class="ob-confirm-val">${dateStr}</span></div>
+      <div class="ob-confirm-row"><span class="ob-confirm-label">Goal finish time</span><span class="ob-confirm-val">${finishFormatted}</span></div>
+      <div class="ob-confirm-row"><span class="ob-confirm-label">Goal input</span><span class="ob-confirm-val">${goalDisplay}</span></div>
+      <div class="ob-confirm-row"><span class="ob-confirm-label">Experience</span><span class="ob-confirm-val" style="text-transform:capitalize">${obState.experience}</span></div>
+      <div class="ob-confirm-row"><span class="ob-confirm-label">Training days/week</span><span class="ob-confirm-val">${obState.runsPerWeek} days</span></div>
+      <div class="ob-confirm-row"><span class="ob-confirm-label">Plan length</span><span class="ob-confirm-val">${totalWeeks} weeks</span></div>
+      <div class="ob-confirm-row"><span class="ob-confirm-label">Plan starts</span><span class="ob-confirm-val">${planStartStr}</span></div>
+    </div>
+    <button class="ob-generate-btn" onclick="finishOnboarding()">Generate My Plan →</button>
+    <div class="ob-nav" style="margin-top:12px">
+      <button class="ob-btn-back" onclick="obBack()">← Back</button>
+    </div>`;
+  }
+
+  card.innerHTML = html;
+
+  // Re-attach validation for step 2 after render
+  if (s === 2 && obState.goalValue) {
+    setTimeout(obValidateGoal, 0);
+  }
+  if (s === 4 && obState.raceDateISO) {
+    setTimeout(obValidateDate, 0);
   }
 }
 
-function showSave(msg, color) {
-  const el = document.getElementById("saveStatus");
-  el.textContent = msg;
-  el.style.color = color;
-  el.style.opacity = "1";
-  setTimeout(() => { el.style.opacity = "0"; }, 1500);
+function obValidateGoal() {
+  const ev = EVENT_CONFIG[obState.event];
+  const secs = parseGoalToSeconds(obState.goalType, obState.goalValue, ev.dist);
+  const errEl = document.getElementById("goalError");
+  const nextBtn = document.getElementById("goalNextBtn");
+
+  if (!obState.goalValue || isNaN(secs) || secs <= 0) {
+    if (errEl) { errEl.style.display = "none"; }
+    if (nextBtn) nextBtn.disabled = true;
+    return;
+  }
+
+  const vdot = calcVDOT(ev.dist, secs);
+  const worldRecordSecs = {"5k":757,"10k":1573,"half":3544,"full":7299}[obState.event];
+
+  if (secs < worldRecordSecs * 0.70) {
+    if (errEl) { errEl.textContent = "That goal is faster than world-record pace. Please double-check your input."; errEl.style.display = "block"; }
+    if (nextBtn) nextBtn.disabled = true;
+    return;
+  }
+  if (vdot < 18) {
+    if (errEl) { errEl.textContent = "That pace is very slow — try entering a more realistic goal time."; errEl.style.display = "block"; }
+    if (nextBtn) nextBtn.disabled = true;
+    return;
+  }
+
+  if (errEl) errEl.style.display = "none";
+  if (nextBtn) nextBtn.disabled = false;
 }
 
-// ─── STATS ─────────────────────────────────────────────────────────────────
+function calcAvailableWeeks(raceDateISO) {
+  const race = new Date(raceDateISO);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  // Start next Monday
+  const dow = today.getDay();
+  const daysToMon = dow === 1 ? 0 : dow === 0 ? 1 : 8 - dow;
+  const planStart = new Date(today);
+  planStart.setDate(today.getDate() + daysToMon);
+  const diffDays = Math.floor((race - planStart) / (1000*60*60*24));
+  return Math.max(0, Math.floor(diffDays / 7));
+}
+
+function calcPlanTiming(raceDateISO, event) {
+  const ev = EVENT_CONFIG[event];
+  const available = calcAvailableWeeks(raceDateISO);
+  const totalWeeks = Math.min(available, ev.idealWeeks);
+  const raceDate = new Date(raceDateISO);
+  const planStart = new Date(raceDate);
+  planStart.setDate(raceDate.getDate() - totalWeeks * 7);
+  // Snap to Monday
+  const dow = planStart.getDay();
+  if (dow !== 1) planStart.setDate(planStart.getDate() + ((8 - dow) % 7));
+  return { totalWeeks, planStartISO: planStart.toISOString().split("T")[0], availableWeeks: available };
+}
+
+function obValidateDate() {
+  const ev = EVENT_CONFIG[obState.event];
+  const warnEl = document.getElementById("dateWarning");
+  const infoEl = document.getElementById("dateInfo");
+  const weeksEl = document.getElementById("weeksDisplay");
+  const nextBtn = document.getElementById("dateNextBtn");
+  if (!warnEl || !infoEl || !weeksEl || !nextBtn) return;
+
+  if (!obState.raceDateISO) {
+    warnEl.style.display="none"; infoEl.style.display="none"; weeksEl.style.display="none";
+    nextBtn.disabled = true; return;
+  }
+
+  const raceDate = new Date(obState.raceDateISO);
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (raceDate <= today) {
+    warnEl.textContent = "Race date must be in the future."; warnEl.style.display="block";
+    infoEl.style.display="none"; weeksEl.style.display="none"; nextBtn.disabled=true; return;
+  }
+
+  const available = calcAvailableWeeks(obState.raceDateISO);
+  if (available < ev.minWeeks) {
+    warnEl.textContent = `Only ${available} week${available!==1?"s":""} until race day — a ${ev.label} plan needs at least ${ev.minWeeks}. Try a later date or switch to a shorter event.`;
+    warnEl.style.display="block"; infoEl.style.display="none"; weeksEl.style.display="none"; nextBtn.disabled=true; return;
+  }
+
+  warnEl.style.display="none";
+  const useWeeks = Math.min(available, ev.idealWeeks);
+  weeksEl.textContent = `✓ ${useWeeks}-week plan`;
+  weeksEl.style.display="block";
+
+  if (available > ev.idealWeeks) {
+    infoEl.textContent = `You have ${available} weeks — we'll use an optimal ${ev.idealWeeks}-week plan. Use the extra ${available - ev.idealWeeks} weeks to run easy and build base fitness.`;
+    infoEl.style.display="block";
+  } else {
+    infoEl.style.display="none";
+  }
+  nextBtn.disabled = false;
+}
+
+function obNext() {
+  if (obState.step < 5) { obState.step++; renderObStep(); }
+}
+function obBack() {
+  if (obState.step > 1) { obState.step--; renderObStep(); }
+}
+
+function finishOnboarding() {
+  const ev = EVENT_CONFIG[obState.event];
+  const finishSecs = parseGoalToSeconds(obState.goalType, obState.goalValue, ev.dist);
+  const vdot = calcVDOT(ev.dist, finishSecs);
+  const paces = calcTrainingPaces(vdot);
+  const { totalWeeks, planStartISO } = calcPlanTiming(obState.raceDateISO, obState.event);
+
+  let goalDisplay;
+  if (obState.goalType === "time") goalDisplay = obState.goalValue;
+  else if (obState.goalType === "mph") goalDisplay = `${obState.goalValue} mph`;
+  else goalDisplay = `${obState.goalValue}/mi`;
+
+  const config = {
+    version: 1,
+    event: obState.event,
+    goalSeconds: finishSecs,
+    goalDisplay,
+    goalFinishFormatted: formatSeconds(finishSecs),
+    vdot: Math.round(vdot * 10) / 10,
+    paces,
+    experience: obState.experience,
+    runsPerWeek: obState.runsPerWeek,
+    raceDateISO: obState.raceDateISO,
+    planStartISO,
+    totalWeeks,
+    generatedAt: Date.now(),
+  };
+
+  saveConfig(config);
+  completed = {};
+  saveProgress();
+  hideOnboarding();
+  bootApp(config);
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────────────────────
+function showSettings() {
+  const ok = confirm("Reset your training plan?\n\nThis will clear your current plan and all logged runs. You'll set up a new plan from scratch.");
+  if (!ok) return;
+  localStorage.removeItem("training-config");
+  localStorage.removeItem("training-progress");
+  completed = {};
+  expanded = {};
+  WEEKS = [];
+  document.getElementById("tabs").innerHTML = "";
+  document.getElementById("content").innerHTML = "";
+  showOnboarding();
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let WEEKS = [];
+let activeWeek = 0;
+let completed = {};
+let expanded = {};
+let currentConfig = null;
+
+function getCurrentWeekIndex() {
+  if (!currentConfig) return 0;
+  const planStart = new Date(currentConfig.planStartISO);
+  const now = new Date();
+  const diff = Math.floor((now - planStart) / (7*24*60*60*1000));
+  return Math.max(0, Math.min(diff, WEEKS.length - 1));
+}
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
 function updateStats() {
   const allRuns = WEEKS.flatMap(w => w.runs.filter(r => r.type !== "rest"));
   const done = allRuns.filter(r => completed[r.id] || r.readonly).length;
-  const pct = Math.round(done / allRuns.length * 100);
+  const pct = allRuns.length ? Math.round(done / allRuns.length * 100) : 0;
   document.getElementById("pct").textContent = pct + "%";
   document.getElementById("runCount").textContent = done + "/" + allRuns.length + " runs";
   document.getElementById("progressFill").style.width = pct + "%";
 }
 
-// ─── TOGGLE ────────────────────────────────────────────────────────────────
-function toggleRun(id) {
-  completed[id] = !completed[id];
-  save();
-  updateStats();
-  renderWeek(activeWeek);
+function showSave(msg, color) {
+  const el = document.getElementById("saveStatus");
+  el.textContent = msg; el.style.color = color; el.style.opacity = "1";
+  setTimeout(() => { el.style.opacity = "0"; }, 1500);
 }
 
+// ─── TOGGLE ──────────────────────────────────────────────────────────────────
+function toggleRun(id) {
+  completed[id] = !completed[id];
+  saveProgress(); updateStats(); renderWeek(activeWeek);
+}
 function toggleExpand(id) {
   expanded[id] = !expanded[id];
   renderWeek(activeWeek);
 }
 
-// ─── RENDER ────────────────────────────────────────────────────────────────
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function renderHeader(config) {
+  const ev = EVENT_CONFIG[config.event];
+  const raceDate = new Date(config.raceDateISO);
+  const dateStr = raceDate.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  document.getElementById("headerLabel").textContent = ev.trackerLabel;
+  document.getElementById("headerTitle").textContent = `${dateStr} 🏁`;
+  document.getElementById("headerSub").textContent = `Goal: ${config.goalFinishFormatted} · ${config.paces.threshold.mphLo} mph tempo`;
+}
+
 function renderTabs() {
   const curIdx = getCurrentWeekIndex();
   const tabsEl = document.getElementById("tabs");
@@ -337,9 +1010,11 @@ function renderTabs() {
 }
 
 function segDotColor(seg) {
-  if (/5\.[345678]|Easy/i.test(seg)) return "#22c55e";
-  if (/6\.[5-9]|7\.1/i.test(seg)) return "#f97316";
-  return "#a855f7";
+  const l = seg.toLowerCase();
+  if (l.includes("easy") || l.includes("warm-up") || l.includes("cool-down")) return "#22c55e";
+  if (l.includes("tempo") || l.includes("threshold") || l.includes("goal pace")) return "#f97316";
+  if (l.includes("strides") || l.includes("interval") || l.includes("all out")) return "#a855f7";
+  return "#3b82f6";
 }
 
 function renderWeek(idx) {
@@ -351,8 +1026,8 @@ function renderWeek(idx) {
 
   let html = `<div class="wk-header">
     <div class="wk-title-row">
-      <div class="wk-title">${w.num === 9 ? "Race Week" : "Week " + w.num}</div>
-      ${w.tag ? `<span class="badge badge-${w.tag === "CUTBACK" ? "cutback" : w.tag === "TAPER" ? "taper" : "race"}">${w.tag}</span>` : ""}
+      <div class="wk-title">${w.isRaceWeek ? "Race Week" : "Week " + w.num}</div>
+      ${w.tag ? `<span class="badge badge-${w.tag==="CUTBACK"?"cutback":w.tag==="TAPER"?"taper":"race"}">${w.tag}</span>` : ""}
       ${isCurrent ? `<span class="badge badge-current">THIS WEEK</span>` : ""}
     </div>
     <div class="wk-goal">${w.goal}</div>
@@ -362,7 +1037,6 @@ function renderWeek(idx) {
   if (w.tag === "CUTBACK") html += `<div class="alert alert-yellow">⚡ Your body gets stronger during recovery. <strong>Do not add miles this week.</strong></div>`;
   if (w.tag === "TAPER") html += `<div class="alert alert-blue">🌊 You'll feel sluggish — that's normal taper fatigue. The work is done. <strong>Trust it.</strong></div>`;
 
-  // Run cards
   w.runs.forEach(run => {
     const cfg = TYPE_CFG[run.type] || TYPE_CFG.easy;
     const isChecked = completed[run.id] || run.readonly;
@@ -371,28 +1045,26 @@ function renderWeek(idx) {
     const hasDetails = run.details && Object.keys(run.details).filter(k => run.details[k]).length > 0;
     const canExpand = (run.structure && run.structure.length) || hasDetails || run.hr_note;
 
-    html += `<div class="run-card${isRest ? " rest" : ""}" style="background:${isChecked && !isRest ? "#0d1f0d" : cfg.bg};border:1px solid ${isChecked && !isRest ? "#22c55e35" : cfg.border}">`;
-    html += `<div class="run-card-top" onclick="${canExpand ? `toggleExpand('${run.id}')` : ""}">`;
+    html += `<div class="run-card${isRest?" rest":""}" style="background:${isChecked&&!isRest?"#0d1f0d":cfg.bg};border:1px solid ${isChecked&&!isRest?"#22c55e35":cfg.border}">`;
+    html += `<div class="run-card-top" onclick="${canExpand?`toggleExpand('${run.id}')`:""}" style="${!canExpand?"cursor:default":""}">`;
 
-    // Left: checkbox or rest icon
     if (isRest) {
       html += `<div class="rest-icon">😴</div>`;
     } else {
-      html += `<div class="run-checkbox${isChecked ? " checked" : ""}${run.readonly ? " readonly" : ""}" onclick="event.stopPropagation();${run.readonly ? "" : `toggleRun('${run.id}')`}">${isChecked ? "✓" : ""}</div>`;
+      html += `<div class="run-checkbox${isChecked?" checked":""}${run.readonly?" readonly":""}" onclick="event.stopPropagation();${run.readonly?"":` toggleRun('${run.id}')`}">${isChecked?"✓":""}</div>`;
     }
 
     html += `<div class="run-info">
       <div class="run-day">${run.day}</div>
-      <div class="run-name${isChecked && !run.readonly ? " crossed" : ""}">${run.name}</div>
-      <div class="run-dist${run.type === "race" ? " race-dist" : ""}">${run.dist}</div>
+      <div class="run-name${isChecked&&!run.readonly?" crossed":""}">${run.name}</div>
+      <div class="run-dist${run.type==="race"?" race-dist":""}">${run.dist}</div>
     </div>`;
 
     html += `<div class="run-right">`;
-    if (run.speed !== "—") html += `<div class="run-speed">${run.speed}</div>`;
-    if (canExpand) html += `<div class="expand-btn${isOpen ? " open" : ""}">▾</div>`;
+    if (run.speed && run.speed !== "—") html += `<div class="run-speed">${run.speed}</div>`;
+    if (canExpand) html += `<div class="expand-btn${isOpen?" open":""}">▾</div>`;
     html += `</div></div>`;
 
-    // Expanded
     if (isOpen && canExpand) {
       html += `<div class="run-detail"><div class="run-detail-inner">`;
       if (run.structure) {
@@ -403,40 +1075,40 @@ function renderWeek(idx) {
         html += `</div>`;
       }
       if (run.details) {
-        Object.entries(run.details).forEach(([k, v]) => {
+        Object.entries(run.details).forEach(([k,v]) => {
           if (v) html += `<div class="detail-row"><div class="detail-label">${k}</div><div class="detail-val">${v}</div></div>`;
         });
       }
-      if (run.hr_note) {
-        html += `<div style="margin-top:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:8px 10px;font-size:12px;color:#fca5a5;line-height:1.6"><strong style="color:#ef4444">HR note:</strong> ${run.hr_note}</div>`;
-      }
       html += `</div></div>`;
     }
-
     html += `</div>`;
   });
 
-  // Race week extras
-  if (w.num === 9) {
-    html += `<div class="race-hero"><div class="race-emoji">🏁</div><div class="race-title">April 26, 2025</div><div class="race-sub">Half Marathon · Goal: Sub 2:00:00</div></div>`;
+  // Race week strategy card
+  if (w.isRaceWeek) {
+    const p = w.paces;
+    html += `<div class="race-hero"><div class="race-emoji">🏁</div>
+      <div class="race-title">${w.raceDate}</div>
+      <div class="race-sub">${w.eventLabel} · Goal: ${w.goalDisplay}</div>
+    </div>`;
     html += `<div class="pace-card"><div class="pace-card-title">Race Pacing Strategy</div>`;
     [
-      {seg:"Miles 1–3", mph:"6.3 mph", color:"#22c55e", w:"55%"},
-      {seg:"Miles 4–10", mph:"6.5–6.6 mph", color:"#f97316", w:"80%"},
-      {seg:"Miles 11–13.1", mph:"All out", color:"#a855f7", w:"100%"},
+      {seg:"First third",  mph:`${p.easy.mphHi} mph`,                color:"#22c55e", w:"50%"},
+      {seg:"Middle third", mph:fmtPace(p.threshold),                  color:"#f97316", w:"78%"},
+      {seg:"Final third",  mph:"All out",                              color:"#a855f7", w:"100%"},
     ].forEach(r => {
       html += `<div class="pace-seg"><div class="pace-miles">${r.seg}</div><div class="pace-bar-wrap"><div class="pace-bar" style="width:${r.w};background:${r.color}"></div></div><div class="pace-mph" style="color:${r.color}">${r.mph}</div></div>`;
     });
-    html += `<div style="padding:10px 14px;font-size:12px;color:#fdba74;background:rgba(249,115,22,0.06);line-height:1.6"><strong>Key rule:</strong> Let people pass you in miles 1–3. The race begins at mile 10.</div></div>`;
+    html += `<div style="padding:10px 14px;font-size:12px;color:#fdba74;background:rgba(249,115,22,0.06);line-height:1.6"><strong>Key rule:</strong> Start conservative — the race begins in the final third.</div></div>`;
   }
 
   // Today card
   if (isCurrent) {
     const todayRun = w.runs.find(r => {
-      if (r.day === "Sat/Sun" && (today === "Sat" || today === "Sun")) return true;
+      if (r.day === "Sat/Sun" && (today==="Sat"||today==="Sun")) return true;
+      if (r.day === "Fri/Sat" && (today==="Fri"||today==="Sat")) return true;
       return r.day === today;
     });
-
     if (!todayRun || todayRun.type === "rest") {
       html += `<div class="rest-today"><div style="font-size:26px">😴</div><div style="font-size:14px;font-weight:700;margin-top:6px">Rest Day — ${today}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">No run scheduled. Recovery is training too.</div></div>`;
     } else {
@@ -445,26 +1117,24 @@ function renderWeek(idx) {
         <div class="today-label">📍 Today's Run — ${today}</div>
         <div class="today-row">
           <div><div class="today-name">${todayRun.name}</div><div class="today-details">${todayRun.dist} · ${todayRun.speed}</div></div>
-          <div style="font-size:22px">${isChecked ? "✅" : "👟"}</div>
+          <div style="font-size:22px">${isChecked?"✅":"👟"}</div>
         </div>
-        <div class="today-hint ${isChecked ? "hint-done" : "hint-pending"}">
-          ${isChecked ? "Great work! Run logged ✓" : "Tap the checkbox on the card above when you're done!"}
+        <div class="today-hint ${isChecked?"hint-done":"hint-pending"}">
+          ${isChecked?"Great work! Run logged ✓":"Tap the checkbox on the card above when you're done!"}
         </div>
       </div>`;
     }
   }
 
-  const contentEl = document.getElementById("content");
-  contentEl.innerHTML = `<div class="week-panel active">${html}</div>`;
+  document.getElementById("content").innerHTML = `<div class="week-panel active">${html}</div>`;
 }
 
-// ─── NAVIGATION ────────────────────────────────────────────────────────────
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
 function showWeek(n) {
   activeWeek = n;
   renderTabs();
   renderWeek(n);
-  window.scrollTo({top: 0, behavior: "smooth"});
-  // Scroll tab into view
+  window.scrollTo({top:0, behavior:"smooth"});
   const tabs = document.querySelectorAll(".tab");
   if (tabs[n]) tabs[n].scrollIntoView({behavior:"smooth", block:"nearest", inline:"center"});
 }
@@ -474,11 +1144,30 @@ function changeWeek(dir) {
   if (next >= 0 && next < WEEKS.length) showWeek(next);
 }
 
-// ─── INIT ──────────────────────────────────────────────────────────────────
-load();
-updateStats();
-renderTabs();
-renderWeek(activeWeek);
+// ─── BOOT ────────────────────────────────────────────────────────────────────
+function bootApp(config) {
+  currentConfig = config;
+  WEEKS = generatePlan(config);
+  renderHeader(config);
+  activeWeek = getCurrentWeekIndex();
+  updateStats();
+  renderTabs();
+  renderWeek(activeWeek);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init() {
+  // Migrate old key
+  if (localStorage.getItem("hm-v2")) localStorage.removeItem("hm-v2");
+
+  const config = loadConfig();
+  if (!config) { showOnboarding(); return; }
+
+  loadProgress();
+  bootApp(config);
+}
+
+init();
 </script>
 </body>
 </html>
